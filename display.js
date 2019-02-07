@@ -100,7 +100,8 @@ function proceed() {
         );
     } else {
         info("(The end. For now.)");
-        func(function(){});
+        schedule(0, function(){});
+        proceed();
     }
 }
 
