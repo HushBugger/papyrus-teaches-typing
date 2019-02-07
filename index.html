@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <title>Papyrus Teaches Typing</title>
+        <link href="main.css" rel="stylesheet" />
+        <script src="display.js"></script>
+        <script src="story.js"></script>
+        <script>
+            function begin() {
+                document.body.removeChild(
+                    document.getElementById('begin')
+                );
+                setTimeout(proceed, 1000);
+            }
+        </script>
+    </head>
+    <body>
+        <button onclick="begin();" id="begin">Start</button>
+        <div id="messages">
+        </div>
+        <!-- <input type="text" id="answer"></input> -->
+    </body>
+</html>

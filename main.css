@@ -1,0 +1,54 @@
+body {
+    display: flex;
+    flex-direction: column;
+    background: black;
+    margin: 0px;
+    height: 100vh;
+}
+
+div#messages {
+    background: black;
+    color: white;
+    font-family: "DTM Mono", monospace;
+    height: 100%;
+    overflow-y: auto;
+}
+
+p {
+    margin: 10px;
+    min-height: 20px;
+}
+
+input, button {
+    background: black;
+    color: white;
+    padding: 4px;
+    border: 2px solid white;
+    font-family: "DTM Mono", monospace;
+    font-size: 1em;
+}
+
+button {
+    align-self: center;
+    margin-top: 2em;
+}
+
+input#answer {
+    width: calc(100% - 12px);
+}
+
+.papyrus {
+    font-family: "UT Papyrus", "Papyrus", "DTM Mono", Monospace;
+}
+
+@font-face {
+    font-family: "DTM Mono";
+    src: url('font/dtm-mono.woff2') format('woff2'),
+         url('font/dtm-mono.woff') format('woff');
+}
+
+@font-face {
+    font-family: "UT Papyrus";
+    src: url('font/papyrus.woff2') format('woff2'),
+         url('font/papyrus.woff') format('woff');
+}
