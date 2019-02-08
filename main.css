@@ -38,7 +38,11 @@ input#answer {
 }
 
 .papyrus {
-    font-family: "UT Papyrus", "Papyrus", "DTM Mono", Monospace;
+    font-family: "UT Papyrus", "Papyrus", "DTM Mono", monospace;
+}
+
+.sans {
+    font-family: "UT Sans", "Comic Sans", "DTM Mono", sans-serif;
 }
 
 @font-face {
@@ -51,4 +55,10 @@ input#answer {
     font-family: "UT Papyrus";
     src: url('font/papyrus.woff2') format('woff2'),
          url('font/papyrus.woff') format('woff');
+}
+
+@font-face {
+    font-family: "UT Sans";
+    src: url('font/sans.woff2') format('woff2'),
+         url('font/sans.woff') format('woff');
 }

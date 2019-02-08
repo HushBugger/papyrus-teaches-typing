@@ -1,13 +1,16 @@
 'use strict';
 
+var alnum = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+
 var queue = [];
 var queueIndex = 0;
-var punctuation = ['.', ',', '!', '?'];
 var sounds = {
     papyrus: new Audio('sound/papyrus.mp3'),
     pop: new Audio('sound/pop.mp3'),
+    sans: new Audio('sound/sans.mp3'),
 };
-var answerHandlers = [];
+var answerHandler = null;
+var eventsPaused = false;
 
 function createInput() {
     var form = document.createElement('form');
@@ -16,22 +19,30 @@ function createInput() {
     input.id = 'answer';
     form.appendChild(input);
     document.body.appendChild(form);
-    sounds.pop.play();
     form.addEventListener(
         'submit',
         function (event) {
             event.preventDefault();
-            var handler = answerHandlers.pop();
+            if (answerHandler == null) {
+                return;
+            }
             var text = input.value;
             input.value = '';
             var line = document.createElement('p')
             line.innerText = text;
             document.getElementById('messages').appendChild(line);
-            if (handler != null) {
-                handler(text);
-            }
+            scrollDown();
+            answerHandler(text);
+            answerHandler = null;
+            proceed();
         }
     )
+    input.focus();
+}
+
+function scrollDown() {
+    var messages = document.getElementById('messages');
+    messages.scrollTop = messages.scrollHeight;
 }
 
 /**
@@ -48,42 +59,65 @@ function affirmative(text) {
     }
 }
 
-function say(text, classes = [], sound = null) {
+function say(
+    text,
+    classes = [],
+    sound = null,
+    pauseEvents = true,
+    baseDelay = 40
+) {
     var line = document.createElement('p');
     line.classList.add(...classes);
 
-    document.getElementById('messages').appendChild(line);
+    messages.appendChild(line);
+    scrollDown();
+
+    var pause = null;
 
     function scrollText() {
         var char = text[0];
         line.textContent += char;
         text = text.slice(1);
-        if (sound && !' .,!?'.includes(char)) {
-            sound.cloneNode().play();
+        if (sound && !' .,":;\''.includes(char)) {
+            var soundObj = sound.cloneNode();
+            if (sound === sounds.papyrus && !shouldShout) {
+                soundObj.volume = 0.3;
+            }
+            soundObj.play();
         }
         if (!text) {
-            proceed();
+            scrollDown();
+            if (pauseEvents) {
+                eventsPaused = false;
+                proceed();
+            }
             return;
         }
 
-        var delay;
-
-        if (char === ',') {
-            delay = 150;
-        } else if (char === '?' || char === '!' || char === '.') {
-            if (text[0] === ')') {
-                delay = 40;
-            } else {
-                delay = 300;
+        if (sound !== null) {
+            if (char === ',') {
+                pause = baseDelay * 4;
+            } else if (char === '?' || char === '!' || char === '.') {
+                pause = baseDelay * 7.5;
             }
+        }
+
+        var delay;
+        if (alnum.includes(text[0]) && pause !== null) {
+            delay = pause;
+            pause = null;
         } else {
-            delay = 40;
+            delay = baseDelay;
         }
 
         setTimeout(scrollText, delay);
     }
 
     scrollText();
+
+    if (pauseEvents) {
+        eventsPaused = true;
+    }
 }
 
 function schedule(...args) {
@@ -94,19 +128,34 @@ function proceed() {
     if (queueIndex < queue.length) {
         var task = queue[queueIndex++];
         setTimeout(
-            task[1],
-            task[0],
-            ...task.slice(2)
+            function () {
+                task[1](...task.slice(2));
+                if (!eventsPaused) {
+                    proceed();
+                }
+            },
+            task[0]
         );
-    } else {
+    } else if (answerHandler === null) {
         info("(The end. For now.)");
-        schedule(0, function(){});
+        schedule(0, function () {
+            eventsPaused = true;
+        });
         proceed();
     }
 }
 
-function pap(text, delay=750) {
-    schedule(delay, say, text.toUpperCase(), ['papyrus'], sounds.papyrus);
+var shouldShout = true;
+
+function pap(text, delay=750, pauseEvents = true) {
+    if (shouldShout) {
+        text = text.toUpperCase();
+    }
+    schedule(delay, say, text, ['papyrus'], sounds.papyrus, pauseEvents);
+}
+
+function sans(text, delay=750) {
+    schedule(delay, say, text, ['sans'], sounds.sans);
 }
 
 function info(text, delay=750) {
@@ -116,28 +165,45 @@ function info(text, delay=750) {
 function space(delay=750) {
     schedule(
         delay,
-        function() {
+        function () {
             document.getElementById('messages')
                 .appendChild(
                     document.createElement('p')
                 );
-            proceed();
         }
     );
 }
 
 function func(callback, delay=750) {
-    schedule(delay, function() {
+    schedule(delay, function () {
         callback();
-        proceed();
     })
 }
 
 function useAnswer(callback) {
-    schedule(0, function() {
-        answerHandlers.push(function(text) {
+    schedule(0, function () {
+        answerHandler = function(text) {
             callback(text);
-            proceed();
-        });
+        };
+    });
+}
+
+function promptBool(callback, prompt = null) {
+    if (prompt !== null) {
+        info(prompt);
+    }
+    useAnswer(function (text) {
+        switch (affirmative(text)) {
+            case true:
+                callback(true);
+                break;
+            case false:
+                callback(false);
+                break;
+            default:
+                pap("I didn't quite catch that.");
+                promptBool(callback, prompt);
+                break;
+        }
     });
 }
