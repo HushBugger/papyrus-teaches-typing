@@ -1,5 +1,7 @@
 'use strict';
 
+var announceLeft = false;
+
 function begin() {
     if (!localStorage.getItem('completedIntro')) {
         intro();
@@ -21,11 +23,11 @@ function intro() {
     pap("Do not worry! I am not stuck in your computer monitor.");
     pap("I have merely come here to teach you how to type!");
     pap("Do you know how to type?");
-    info('("yes" or "no")');
+    info('* ("yes" or "no")');
     space(2000);
     pap("Oh no! I forgot!");
     pap("Here, take this textbox!");
-    func(function () {
+    schedule(750, function () {
         sounds.pop.play();
         createInput();
     });
@@ -33,7 +35,7 @@ function intro() {
 }
 
 function canYouType() {
-    info("(Do you know how to type?)");
+    info("* (Do you know how to type?)");
     var done = false;
     handleAnswerWith(
         [
@@ -62,16 +64,19 @@ function canYouType() {
     );
 }
 
-function exerciseLoop(challenge = 'dfdfdfdf', num = 1) {
+function exerciseLoop(challenge, goal, after = null, num = 1) {
     var done = false;
+    if (num === 1) {
+        pap("Type this:");
+        pap(challenge);
+    }
+    if (announceLeft) {
+        chara("* " + (goal - num + 1) + " left.", 250);
+    }
     handleAnswerWith(
         [
             [ifSame(challenge), function (text) {
-                if (num > 5) {
-                    pap("Wow!!!");
-                    pap("You're a great typist!");
-                    pap("...that must mean I'm a great teacher!");
-                    pap("Time for a break!");
+                if (num >= goal) {
                     done = true;
                     return;
                 }
@@ -91,10 +96,9 @@ function exerciseLoop(challenge = 'dfdfdfdf', num = 1) {
         },
         function (text) {
             if (done) {
-                breakTime();
-                pap("Tell me if you need anything.");
+                after();
             } else {
-                exerciseLoop(challenge, num);
+                exerciseLoop(challenge, goal, after, num);
             }
         }
     );
@@ -102,13 +106,31 @@ function exerciseLoop(challenge = 'dfdfdfdf', num = 1) {
 
 function startCourse() {
     pap("Let's begin.");
-    pap("To type at truly dazzling speeds, you should put your right index "
-        + "finger on the 'J' key, and your left index finger on the 'F' key.");
+    pap("To type really fast, put your left index finger on the 'F' key, "
+        + "and your right index finger on the 'J' key.");
     pap("Try to remember where the keys are. No peeking!");
-    pap("Type this:");
-    var challenge = 'dfdfdfdf';
-    pap(challenge);
-    exerciseLoop(challenge, 1);
+    firstExercise();
+}
+
+function firstExercise() {
+    exerciseLoop('dfdfdf', 4, function () {
+        pap("Wow!!!");
+        pap("You're a great typist! Well done!");
+        pap("...that must mean I'm a great teacher!");
+        secondExercise();
+    })
+}
+
+function secondExercise() {
+    pap("Here comes the first useful phrase!");
+    pap("Doctor Alphys uses it a lot.");
+    pap("She tells me it stands for 'just kidding'.");
+    exerciseLoop('jk', 5, function () {
+        pap("Fantastic!");
+        pap("Now you can write UnderNet postings in record time!");
+        pap("Let's take a break. Tell me if you need anything!");
+        breakTime();
+    })
 }
 
 function breakTime() {
@@ -148,6 +170,10 @@ function ifStartsWith(...needles) {
     }
 }
 
+function todo() {
+    info("* (Check back later.)");
+}
+
 var shenanigans = [
     [ifIncludes("thank you"), function (text) {
         pap("You're welcome!");
@@ -163,29 +189,57 @@ var shenanigans = [
         }
     }],
     [ifIncludes("stupid doodoo butt", "legendary fartmaster"), function (text) {
-        sans("nice try.");
+        sans("* nice try.");
         pap("Sans! I'm teaching! Get out!!!");
-        sans("sorry.");
+        sans("* sorry.");
+    }],
+    [ifSame('help'), function (text) {
+        todo();
     }],
     [ifSame('credits'), function (text) {
-        function sayCredits(text, delay = 1000, pauseEvents = true) {
-            schedule(delay, say, text, [], null, pauseEvents, 100);
+        function credits(text, delay = 1000, pauseEvents = true, href = null) {
+            schedule(delay, function () {
+                var line = say(text, [], null, pauseEvents, 100);
+                if (href !== null) {
+                    var link = document.createElement('a');
+                    link.href = href;
+                    link.target = '_blank';
+                    line.parentElement.replaceChild(link, line);
+                    link.appendChild(line);
+                }
+            })
         }
-        // todo: include links
         pap("Credits? Like money?", 750, false);
-        sayCredits("CREDITS", 1000, false);
+        credits("CREDITS", 1000);
+        credits("UNDERTALE by Toby Fox", 1000, false, "https://undertale.com");
         pap("What the heck! Who's doing that?", 1000, false);
-        sayCredits("UNDERTALE by Toby Fox", 1000);
-        sayCredits("Determination Mono by Haley Wakamatsu");
-        sayCredits("UT Sans & UT Papyrus by Carter Sande");
-        sayCredits("Popping sound effect by wubitog");
-        sayCredits("Typing lessons by Papyrus");
+        credits("Determination Mono font by Haley Wakamatsu", 2000, true, "https://www.behance.net/gallery/31268855/Determination-Better-Undertale-Font");
+        credits("UT Sans & UT Papyrus fonts by Carter Sande", 1000, true, "https://gitlab.com/cartr/undertale-fonts");
+        credits("Popping sound effect by wubitog", 1000, true, "https://opengameart.org/content/3-pop-sounds");
+        credits("Game by HushBugger", 1000, true, "https://hushbugger.github.io");
+        credits("Typing lessons by Papyrus", 1000, true, document.location);
         pap("Well! That was weird!", 1500);
     }],
+    [ifIncludes('i love you'), function (text) {
+        pap("I love you too!");
+        pap("Platonically.");
+    }],
+    [ifIncludes('where are the knives'), function (text) {
+        announceLeft = true;
+        chara('* Understood.');
+    }],
+    [ifSame('fight', 'act', 'item', 'mercy'), function (text) {
+        todo();
+    }],
+    [ifIncludes('drop table ', 'system(', 'rm -rf', '/etc/passwd'), function (text) {
+        pap("...are you trying to 'hack' me?");
+        pap("I'm so sorry! This is the typing course!");
+        pap("Maybe you should ask Doctor Alphys?");
+    }]
 ];
 
 function handleAnswerWith(handlers, fallback = null, finisher = null) {
-    func(function () {
+    schedule(0, function () {
         answerHandler = function (text) {
             try {
                 for (var handler of handlers) {
@@ -205,5 +259,5 @@ function handleAnswerWith(handlers, fallback = null, finisher = null) {
                 }
             }
         };
-    }, 0);
+    });
 }

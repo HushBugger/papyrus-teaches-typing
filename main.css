@@ -14,9 +14,13 @@ div#messages {
     overflow-y: auto;
 }
 
-p {
+p.message {
     margin: 10px;
     min-height: 20px;
+}
+
+a {
+    color: white;
 }
 
 input, button {
@@ -43,6 +47,10 @@ input#answer {
 
 .sans {
     font-family: "UT Sans", "Comic Sans", "DTM Mono", sans-serif;
+}
+
+.chara {
+    color: #f00;
 }
 
 @font-face {

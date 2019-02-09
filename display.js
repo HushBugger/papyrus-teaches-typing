@@ -8,6 +8,7 @@ var sounds = {
     papyrus: new Audio('sound/papyrus.mp3'),
     pop: new Audio('sound/pop.mp3'),
     sans: new Audio('sound/sans.mp3'),
+    text_beep: new Audio('sound/text_beep.wav'),
 };
 var answerHandler = null;
 var eventsPaused = false;
@@ -29,6 +30,7 @@ function createInput() {
             var text = input.value;
             input.value = '';
             var line = document.createElement('p')
+            line.classList.add('message');
             line.innerText = text;
             document.getElementById('messages').appendChild(line);
             scrollDown();
@@ -67,7 +69,7 @@ function say(
     baseDelay = 40
 ) {
     var line = document.createElement('p');
-    line.classList.add(...classes);
+    line.classList.add('message', ...classes);
 
     messages.appendChild(line);
     scrollDown();
@@ -118,6 +120,8 @@ function say(
     if (pauseEvents) {
         eventsPaused = true;
     }
+
+    return line;
 }
 
 function schedule(...args) {
@@ -158,6 +162,10 @@ function sans(text, delay=750) {
     schedule(delay, say, text, ['sans'], sounds.sans);
 }
 
+function chara(text, delay=750) {
+    schedule(delay, say, text, ['chara'], sounds.text_beep);
+}
+
 function info(text, delay=750) {
     schedule(delay, say, text);
 }
@@ -166,44 +174,9 @@ function space(delay=750) {
     schedule(
         delay,
         function () {
-            document.getElementById('messages')
-                .appendChild(
-                    document.createElement('p')
-                );
+            var line = document.createElement('p');
+            line.classList.add('message');
+            document.getElementById('messages').appendChild(line);
         }
     );
-}
-
-function func(callback, delay=750) {
-    schedule(delay, function () {
-        callback();
-    })
-}
-
-function useAnswer(callback) {
-    schedule(0, function () {
-        answerHandler = function(text) {
-            callback(text);
-        };
-    });
-}
-
-function promptBool(callback, prompt = null) {
-    if (prompt !== null) {
-        info(prompt);
-    }
-    useAnswer(function (text) {
-        switch (affirmative(text)) {
-            case true:
-                callback(true);
-                break;
-            case false:
-                callback(false);
-                break;
-            default:
-                pap("I didn't quite catch that.");
-                promptBool(callback, prompt);
-                break;
-        }
-    });
 }
