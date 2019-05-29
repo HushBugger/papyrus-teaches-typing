@@ -23,7 +23,7 @@ function intro() {
     pap("Do not worry! I am not stuck in your computer monitor.");
     pap("I have merely come here to teach you how to type!");
     pap("Do you know how to type?");
-    info('* ("yes" or "no")');
+    info('("yes" or "no")');
     space(2000);
     pap("Oh no! I forgot!");
     pap("Here, take this textbox!");
@@ -35,7 +35,7 @@ function intro() {
 }
 
 function canYouType() {
-    info("* (Do you know how to type?)");
+    info("(Do you know how to type?)");
     var done = false;
     handleAnswerWith(
         [
@@ -66,16 +66,30 @@ function canYouType() {
 
 function exerciseLoop(challenge, goal, after = null, num = 1) {
     var done = false;
-    if (num === 1) {
-        pap("Type this:");
-        pap(challenge);
-    }
     if (announceLeft) {
         chara("* " + (goal - num + 1) + " left.", 250);
     }
+
+    function madeMistake(text) {
+        pap("Oh no! You made a mistake!");
+        pap("That's okay! Try again!");
+        pap("Type this:");
+        pap(challenge);
+    }
+    madeMistake.challenge = challenge;
+
+    function repeatOrFinishExercise(text) {
+        if (done) {
+            after();
+        } else {
+            exerciseLoop(challenge, goal, after, num);
+        }
+    }
+    repeatOrFinishExercise.after = after;
+
     handleAnswerWith(
         [
-            [ifSame(challenge), function (text) {
+            [ifSame(challenge), function acknowledger(text) {
                 if (num >= goal) {
                     done = true;
                     return;
@@ -88,27 +102,18 @@ function exerciseLoop(challenge, goal, after = null, num = 1) {
             }],
             ...shenanigans
         ],
-        function (text) {
-            pap("Oh no! You made a mistake!");
-            pap("That's okay! Try again!");
-            pap("Type this:");
-            pap(challenge);
-        },
-        function (text) {
-            if (done) {
-                after();
-            } else {
-                exerciseLoop(challenge, goal, after, num);
-            }
-        }
+        madeMistake,
+        repeatOrFinishExercise
     );
 }
 
 function startCourse() {
     pap("Let's begin.");
-    pap("To type really fast, put your left index finger on the 'F' key, "
-        + "and your right index finger on the 'J' key.");
-    pap("Try to remember where the keys are. No peeking!");
+    // pap("To type really fast, put your left index finger on the 'F' key, "
+    //     + "and your right index finger on the 'J' key.");
+    // pap("Try to remember where the keys are. No peeking!");
+    pap("Type this:");
+    pap('dfdfdf');
     firstExercise();
 }
 
@@ -125,6 +130,8 @@ function secondExercise() {
     pap("Here comes the first useful phrase!");
     pap("Doctor Alphys uses it a lot.");
     pap("She tells me it stands for 'just kidding'.");
+    pap("Type this:");
+    pap('jk');
     exerciseLoop('jk', 5, function () {
         pap("Fantastic!");
         pap("Now you can write UnderNet postings in record time!");
@@ -170,8 +177,19 @@ function ifStartsWith(...needles) {
     }
 }
 
+function anyOf(...specs) {
+    return function (text) {
+        for (var spec of specs) {
+            if (spec(text)) {
+                return true;
+            }
+        }
+        return false;
+    }
+}
+
 function todo() {
-    info("* (Check back later.)");
+    info("(Check back later.)");
 }
 
 var shenanigans = [
@@ -220,44 +238,150 @@ var shenanigans = [
         credits("Typing lessons by Papyrus", 1000, true, document.location);
         pap("Well! That was weird!", 1500);
     }],
-    [ifIncludes('i love you'), function (text) {
+    [ifIncludes("i love you"), function (text) {
         pap("I love you too!");
         pap("Platonically.");
     }],
-    [ifIncludes('where are the knives'), function (text) {
+    [ifIncludes("open the door", "let me in", "i need you"), function (text) {
+        todo();
+    }],
+    [ifSame("flirt"), function (text) {
+        todo();
+    }],
+    [ifIncludes("where are the knives"), function (text) {
         announceLeft = true;
         chara('* Understood.');
     }],
-    [ifSame('fight', 'act', 'item', 'mercy'), function (text) {
+    [ifSame("fight"), function (text) {
+        pap("We're not here to fight!");
+        pap("Except metaphorically, with the keyboard.");
+        pap("Show it what you're made of!");
+    }],
+    [ifSame("act"), function (text) {
+        pap("Are you looking for acting lessons?");
+        pap("Mettaton has been taking on new acting trainees!");
+        pap("In his last production, a novice played bush number 4.");
+        pap("His swaying in the wind was captivating.");
+        pap("What was his name again?");
+    }],
+    [ifSame("item"), function (text) {
         todo();
     }],
-    [ifIncludes('drop table ', 'system(', 'rm -rf', '/etc/passwd'), function (text) {
+    [ifSame("mercy", "spare", "flee"), function (text) {
+        todo();
+    }],
+    [ifSame("check"), function (text) {
+        pap("Check? Don't be silly!");
+        pap("These lessons are free! There won't be a bill.");
+    }],
+    [ifIncludes("secret"), function (text) {
+        pap("Secrets???");
+        pap("They wouldn't be secrets if I told you about them, would they?");
+    }],
+    [ifIncludes("bepis"), function (text, elem) {
+        pap("Excuse me! You can't say that!");
+        schedule(750, function () {
+            elem.innerHTML = elem.innerHTML.replace(/bepis/gi, '<s>&nbsp;$&&nbsp;</s>');
+        });
+        pap("There, that's better.");
+    }],
+    [ifIncludes("minecraft", "minceraft"), function (text) {
+        pap('"Mince-Raft"...');
+        pap("I have heard of that game!");
+        pap("I bet it's a chilling tale about being stranded at sea, always "
+            + "fleeing from having your raft minced by sharks.");
+        pap('A bit like that other one, "Run-Escape".');
+    }],
+    [ifIncludes("spaghetti"), function (text) {
+        pap("You know, I think my spaghetti is really improving.");
+        pap("It used to have black bits, but I have mastered a lustrous "
+            + "golden brown sheen.");
+        pap("If only I knew how it tasted...");
+    }],
+    [ifIncludes("skeleton"), function (text) {
+        todo();
+    }],
+    [ifIncludes("bone"), function (text) {
+        todo();
+    }],
+    [ifIncludes("junior jumble", "crossword"), function (text) {
+        todo();
+    }],
+    [ifIncludes("secret ingredient"), function (text) {
+        todo();
+    }],
+    [ifIncludes("annoying dog"), function (text) {
+        todo();
+    }],
+    [ifIncludes("deja vu", "d\u00e9j\u00e0 vu"), function (text) {
+        pap("\"Deja vu\"... Is that the name of a spell?");
+        pap("Are you trying to free me?")
+        pap("Do not worry! I am not stuck in your computer monitor.");
+    }],
+    [ifIncludes("drop table ", "system(", "rm -rf", "/etc/passwd"), function (text) {
         pap("...are you trying to 'hack' me?");
-        pap("I'm so sorry! This is the typing course!");
+        pap("I'm so sorry! This is the typing course, not the hacking course!");
         pap("Maybe you should ask Doctor Alphys?");
-    }]
+    }],
+    [anyOf(ifIncludes("player.setlevel", "noclip"),
+           ifStartsWith("/")), function (text) {
+        pap("This is about improving your own skill! There are no cheats for that.");
+        pap("Except performance-enhancing substances.");
+        pap("Don't use those!");
+    }],
+    [ifIncludes("undertale.exe"), function (text) {
+        todo();
+    }],
+    [ifIncludes("knock knock"), function (text) {
+        pap("Who's there?");
+        useAnswer(function xWho(text) {
+            if (text) {
+                text = text[0].toUpperCase() + text.slice(1);
+            }
+            text = text.trim();
+            pap(text + " who?");
+            useAnswer(function dotDotDot(text) {
+                pap("...");
+            });
+        });
+    }],
+    [ifIncludes("giasfclfebrehber", "giasfclfubrehber"), function (text) {
+        todo();
+    }],
+    [ifIncludes("where is kiddo", "where's kiddo", "where is frisk", "where's frisk"), function (text) {
+        sans("* heh. don't yuo mean...");
+        sans("* where is typo?", 1500);
+    }],
+    // character names
 ];
 
 function handleAnswerWith(handlers, fallback = null, finisher = null) {
-    schedule(0, function () {
-        answerHandler = function (text) {
-            try {
-                for (var handler of handlers) {
-                    if (handler[0](text.toLowerCase())) {
-                        handler[1](text);
-                        return;
-                    }
-                }
-                if (fallback !== null) {
-                    fallback(text);
-                } else {
-                    pap("I didn't quite catch that.");
-                }
-            } finally {
-                if (finisher !== null) {
-                    finisher(text);
+    useAnswer(function handlerFinder(text, elem) {
+        try {
+            for (var handler of handlers) {
+                if (handler[0](text.toLowerCase())) {
+                    handler[1](text, elem);
+                    return;
                 }
             }
-        };
+            if (fallback !== null) {
+                schedule(0, fallback, text);
+            } else {
+                pap("I didn't quite catch that.");
+            }
+        } finally {
+            if (finisher !== null) {
+                schedule(0, finisher, text);
+            }
+        }
     });
+}
+
+function useAnswer(handler) {
+    function handlerInstater() {
+        eventsPaused = true;
+        answerHandler = handler;
+    }
+    handlerInstater.handler = handler;
+    schedule(0, handlerInstater);
 }

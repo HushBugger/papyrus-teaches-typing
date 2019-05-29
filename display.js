@@ -3,12 +3,12 @@
 var alnum = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
 
 var queue = [];
-var queueIndex = 0;
 var sounds = {
     papyrus: new Audio('sound/papyrus.mp3'),
     pop: new Audio('sound/pop.mp3'),
     sans: new Audio('sound/sans.mp3'),
     text_beep: new Audio('sound/text_beep.wav'),
+    bark: new Audio('sound/bark.mp3'),
 };
 var answerHandler = null;
 var eventsPaused = false;
@@ -16,13 +16,16 @@ var eventsPaused = false;
 function createInput() {
     var form = document.createElement('form');
     form.onsubmit = 'return false;';
+    form.autocomplete = 'off';
     var input = document.createElement('input');
     input.id = 'answer';
+    input.autocomplete = 'off';
     form.appendChild(input);
     document.body.appendChild(form);
     form.addEventListener(
         'submit',
         function (event) {
+            // todo: race condition if you submit twice really fast
             event.preventDefault();
             if (answerHandler == null) {
                 return;
@@ -34,8 +37,12 @@ function createInput() {
             line.innerText = text;
             document.getElementById('messages').appendChild(line);
             scrollDown();
-            answerHandler(text);
+            eventsPaused = false;
+            var oldQueue = queue;
+            queue = [];
+            answerHandler(text, line);
             answerHandler = null;
+            queue.push(...oldQueue);
             proceed();
         }
     )
@@ -45,20 +52,6 @@ function createInput() {
 function scrollDown() {
     var messages = document.getElementById('messages');
     messages.scrollTop = messages.scrollHeight;
-}
-
-/**
- * @param {string} text
- * @returns {bool|null}
- */
-function affirmative(text) {
-    if (text.toLowerCase().startsWith('ye')) {
-        return true;
-    } else if (text.toLowerCase().startsWith('no')) {
-        return false;
-    } else {
-        return null;
-    }
 }
 
 function say(
@@ -72,7 +65,6 @@ function say(
     line.classList.add('message', ...classes);
 
     messages.appendChild(line);
-    scrollDown();
 
     var pause = null;
 
@@ -113,6 +105,7 @@ function say(
         }
 
         setTimeout(scrollText, delay);
+        scrollDown();
     }
 
     scrollText();
@@ -124,16 +117,19 @@ function say(
     return line;
 }
 
-function schedule(...args) {
-    queue.push(args);
+function schedule(delay, fun, ...args) {
+    queue.push([delay, fun, ...args]);
 }
 
 function proceed() {
-    if (queueIndex < queue.length) {
-        var task = queue[queueIndex++];
+    if (queue.length) {
+        var task = queue[0];
+        var oldQueue = queue.slice(1);
+        queue = [];
         setTimeout(
             function () {
                 task[1](...task.slice(2));
+                queue.push(...oldQueue);
                 if (!eventsPaused) {
                     proceed();
                 }
