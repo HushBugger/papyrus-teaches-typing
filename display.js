@@ -2,7 +2,6 @@
 
 var alnum = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
 
-var queue = [];
 var sounds = {
     papyrus: new Audio('sound/papyrus.mp3'),
     pop: new Audio('sound/pop.mp3'),
@@ -11,7 +10,6 @@ var sounds = {
     bark: new Audio('sound/bark.mp3'),
 };
 var answerHandler = null;
-var eventsPaused = false;
 
 function createInput() {
     var form = document.createElement('form');
@@ -37,16 +35,17 @@ function createInput() {
             line.innerText = text;
             document.getElementById('messages').appendChild(line);
             scrollDown();
-            eventsPaused = false;
-            var oldQueue = queue;
-            queue = [];
-            answerHandler(text, line);
+            answerHandler([text, line]);
             answerHandler = null;
-            queue.push(...oldQueue);
-            proceed();
         }
     )
     input.focus();
+}
+
+function getAnswer() {
+    return new Promise(resolve => {
+        answerHandler = resolve;
+    });
 }
 
 function scrollDown() {
@@ -54,11 +53,14 @@ function scrollDown() {
     messages.scrollTop = messages.scrollHeight;
 }
 
-function say(
+function sleep(delay) {
+    return new Promise(resolve => setTimeout(resolve, delay));
+}
+
+async function say(
     text,
     classes = [],
     sound = null,
-    pauseEvents = true,
     baseDelay = 40
 ) {
     var line = document.createElement('p');
@@ -68,10 +70,9 @@ function say(
 
     var pause = null;
 
-    function scrollText() {
-        var char = text[0];
+    for (let i = 0; i < text.length; i++) {
+        let char = text[i];
         line.textContent += char;
-        text = text.slice(1);
         if (sound && !' .,":;\''.includes(char)) {
             var soundObj = sound.cloneNode();
             if (sound === sounds.papyrus && !shouldShout) {
@@ -79,20 +80,14 @@ function say(
             }
             soundObj.play();
         }
-        if (!text) {
-            scrollDown();
-            if (pauseEvents) {
-                eventsPaused = false;
-                proceed();
-            }
-            return;
-        }
 
         if (sound !== null) {
             if (char === ',') {
                 pause = baseDelay * 4;
-            } else if (char === '?' || char === '!' || char === '.') {
-                pause = baseDelay * 7.5;
+            } else if ('?!.'.includes(char)) {
+                if (i + 1 >= text.length || ! '?!.'.includes(text[i + 1])) {
+                    pause = baseDelay * 7.5;
+                }
             }
         }
 
@@ -104,75 +99,48 @@ function say(
             delay = baseDelay;
         }
 
-        setTimeout(scrollText, delay);
         scrollDown();
-    }
-
-    scrollText();
-
-    if (pauseEvents) {
-        eventsPaused = true;
+        await sleep(delay);
     }
 
     return line;
 }
 
-function schedule(delay, fun, ...args) {
-    queue.push([delay, fun, ...args]);
-}
-
-function proceed() {
-    if (queue.length) {
-        var task = queue[0];
-        var oldQueue = queue.slice(1);
-        queue = [];
-        setTimeout(
-            function () {
-                task[1](...task.slice(2));
-                queue.push(...oldQueue);
-                if (!eventsPaused) {
-                    proceed();
-                }
-            },
-            task[0]
-        );
-    } else if (answerHandler === null) {
-        info("(The end. For now.)");
-        schedule(0, function () {
-            eventsPaused = true;
-        });
-        proceed();
-    }
-}
-
 var shouldShout = true;
 
-function pap(text, delay=750, pauseEvents = true) {
+async function pap(text, delay=750) {
     if (shouldShout) {
         text = text.toUpperCase();
     }
-    schedule(delay, say, text, ['papyrus'], sounds.papyrus, pauseEvents);
+    await sleep(delay);
+    return await say(text, ['papyrus'], sounds.papyrus);
 }
 
-function sans(text, delay=750) {
-    schedule(delay, say, text, ['sans'], sounds.sans);
+async function sans(text, delay=750) {
+    await sleep(delay);
+    return await say(text, ['sans'], sounds.sans);
 }
 
-function chara(text, delay=750) {
-    schedule(delay, say, text, ['chara'], sounds.text_beep);
+async function chara(text, delay=750) {
+    await sleep(delay);
+    return await say(text, ['chara'], sounds.text_beep);
 }
 
-function info(text, delay=750) {
-    schedule(delay, say, text);
+async function info(text, delay=750) {
+    await sleep(delay);
+    return await say(text);
 }
 
-function space(delay=750) {
-    schedule(
-        delay,
-        function () {
-            var line = document.createElement('p');
-            line.classList.add('message');
-            document.getElementById('messages').appendChild(line);
-        }
-    );
+async function space(delay=750) {
+    await sleep(delay);
+    var line = document.createElement('p');
+    line.classList.add('message');
+    document.getElementById('messages').appendChild(line);
+    return line;
+}
+
+async function paps(texts, delay=750) {
+    for (let text of texts) {
+        await pap(text, delay);
+    }
 }
