@@ -125,50 +125,6 @@ async function breakTime() {
     }
 }
 
-function ifIncludes(...needles) {
-    return function (text) {
-        for (var needle of needles) {
-            if (text.includes(needle)) {
-                return true;
-            }
-        }
-        return false;
-    };
-}
-
-function ifSame(...needles) {
-    return function (text) {
-        for (var needle of needles) {
-            if (text === needle) {
-                return true;
-            }
-        }
-        return false;
-    }
-}
-
-function ifStartsWith(...needles) {
-    return function (text) {
-        for (var needle of needles) {
-            if (text.startsWith(needle)) {
-                return true;
-            }
-        }
-        return false;
-    }
-}
-
-function anyOf(...specs) {
-    return function (text) {
-        for (var spec of specs) {
-            if (spec(text)) {
-                return true;
-            }
-        }
-        return false;
-    }
-}
-
 async function todo() {
     await info("(Check back later.)");
 }
@@ -313,19 +269,3 @@ var shenanigans = [
     }],
     // character names
 ];
-
-async function handleAnswerWith(handlers, fallback = null) {
-    var text, elem;
-    [text, elem] = await getAnswer();
-    for (var handler of handlers) {
-        if (handler[0](text.toLowerCase())) {
-            await handler[1](text, elem);
-            return;
-        }
-    }
-    if (fallback !== null) {
-        await fallback(text);  // pass elem too?
-    } else {
-        await pap("I didn't quite catch that.");
-    }
-}
