@@ -308,7 +308,7 @@ async function alphysSegment() {
     await alphys("Okay, now a screen test.");
     await alphys("I'm going to send a test message, and then I'm going to "
                  + "make it a different color.");
-    line = await info("Mew Mew rocks");
+    let line = await info("Mew Mew rocks");
     await sleep(750);
     line.style.color = localStorage.getItem('favColor') || 'pink';
     await sleep(500);
