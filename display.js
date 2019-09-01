@@ -63,6 +63,7 @@ function createInput() {
     if (answerHandler != null) {
         input.disabled = false;
         input.focus();
+        scrollDown();
     }
 }
 
