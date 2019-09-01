@@ -3,13 +3,59 @@
     <head>
         <meta charset="UTF-8" />
         <title>Papyrus Teaches Typing</title>
+        <link rel="shortcut icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgAQMAAABJtOi3AAAABlBMVEUAAAD///+l2Z/dAAAACXBIWXMAAAsSAAALEgHS3X78AAAAaUlEQVQIHQXB0QmCYBQG0HO/JKyH8NFtajRHc4cGSJqgIEqC/DuHtkrpJCKdkv7bpgy/mp1bW3L5NvExBQLBEPSBqJrj/Zpj3NbMk0dumjo9n4/UtBeXgxjIOmK3UHW/HtMQG4FoBFj4A26DIkfOxwVtAAAAAElFTkSuQmCC" />
         <link href="main.css" rel="stylesheet" />
+        <script type="text/javascript">
+        /**
+         * @licstart  The following is the entire license notice for the JavaScript code in this page.
+         *
+         * Copyright 2019 HushBugger
+         *
+         * Permission to use, copy, modify, and/or distribute this software for any
+         * purpose with or without fee is hereby granted, provided that the above
+         * copyright notice and this permission notice appear in all copies.
+         *
+         * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+         * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+         * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+         * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+         * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+         * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+         * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+         *
+         * @licend  The above is the entire license notice for the JavaScript code in this page.
+         */
+        </script>
+        <script src="assets.js"></script>
         <script src="display.js"></script>
         <script src="story.js"></script>
     </head>
     <body>
-        <button onclick="begin();" id="begin">Start</button>
+        <h1 class="papyrus" id="heading">PAPYRUS TEACHES TYPING</h1>
+        <button onclick="begin();" id="beginButton">Start</button>
         <div id="messages">
+            <noscript>
+                <p>You need JavaScript to play this game. Please enable it, or open the game in a browser that supports it.</p>
+            </noscript>
         </div>
+        <script type="text/javascript">
+            if (typeof begin === 'undefined' || typeof images === 'undefined' || typeof createInput === 'undefined') {
+                document.getElementById('messages').innerHTML = (
+                    "<p>Something went wrong loading the game.</p>\n" +
+                    (/Trident\/|MSIE /.test(window.navigator.userAgent) ?
+                     "<p>You're using Internet Explorer.</p>\n" :
+                     "<p>Your browser might be outdated.</p>\n") +
+                    '<p>Try opening the game in a modern browser like <a href="https://www.mozilla.org/firefox/download/">Firefox</a> or <a href="https://www.google.com/chrome/">Chrome</a> instead.</p>\n' +
+                    "<p>If you're sure your browser is up to date, try refreshing.</p>"
+                );
+                document.body.removeChild(
+                    document.getElementById('beginButton')
+                );
+            } else {
+                document.getElementById('messages').innerHTML = (
+                    "<p class=\"preGameMessage\">This game has sound but muting it is ok.</p>"
+                );
+            }
+        </script>
     </body>
 </html>

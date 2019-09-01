@@ -1,15 +1,30 @@
+/**
+ * @licstart  The following is the entire license notice for the JavaScript code in this page.
+ *
+ * Copyright 2019 HushBugger
+ *
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ *
+ * @licend  The above is the entire license notice for the JavaScript code in this page.
+ */
+
 'use strict';
 
-var alnum = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+const alnum = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
 
-var sounds = {
-    papyrus: new Audio('sound/papyrus.mp3'),
-    pop: new Audio('sound/pop.mp3'),
-    sans: new Audio('sound/sans.mp3'),
-    text_beep: new Audio('sound/text_beep.wav'),
-    bark: new Audio('sound/bark.mp3'),
-};
-var answerHandler = null;
+let answerHandler = null;
+
+let linesEntered = 0;
 
 function createInput() {
     var form = document.createElement('form');
@@ -18,43 +33,60 @@ function createInput() {
     var input = document.createElement('input');
     input.id = 'answer';
     input.autocomplete = 'off';
+    input.disabled = true;
     form.appendChild(input);
     document.body.appendChild(form);
     form.addEventListener(
         'submit',
-        function (event) {
+        function formListener(event) {
             // todo: race condition if you submit twice really fast
             event.preventDefault();
             if (answerHandler == null) {
                 return;
             }
             var text = input.value;
+            if (text.trim() === '') {
+                return;
+            }
             input.value = '';
+            input.disabled = true;
             var line = document.createElement('p')
-            line.classList.add('message');
+            line.classList.add('message', 'player');
             line.innerText = text;
             document.getElementById('messages').appendChild(line);
             scrollDown();
             answerHandler([text, line]);
             answerHandler = null;
+            linesEntered++;
         }
     )
-    input.focus();
+    if (answerHandler != null) {
+        input.disabled = false;
+        input.focus();
+    }
 }
 
+/**
+ * @returns {Promise<[string, HTMLParagraphElement]>}
+ */
 function getAnswer() {
-    return new Promise(resolve => {
+    return new Promise(function (resolve) {
+        let answer = document.getElementById('answer');
+        answer.disabled = false;
+        answer.focus();
         answerHandler = resolve;
     });
 }
 
 function scrollDown() {
-    var messages = document.getElementById('messages');
+    let messages = document.getElementById('messages');
     messages.scrollTop = messages.scrollHeight;
 }
 
 function sleep(delay) {
-    return new Promise(resolve => setTimeout(resolve, delay));
+    return new Promise(function sleepResolver(resolve) {
+        setTimeout(resolve, delay)
+    });
 }
 
 async function say(
@@ -85,10 +117,15 @@ async function say(
             if (char === ',') {
                 pause = baseDelay * 4;
             } else if ('?!.'.includes(char)) {
-                if (i + 1 >= text.length || ! '?!.'.includes(text[i + 1])) {
+                if (i + 1 >= text.length || text[i + 1] == ' ') {
                     pause = baseDelay * 7.5;
                 }
+            } else if (char === '-') {
+                pause = baseDelay * 3;
             }
+        }
+        if (char === '\n') {
+            pause = baseDelay * 10;
         }
 
         var delay;
@@ -131,18 +168,52 @@ async function info(text, delay=750) {
     return await say(text);
 }
 
+async function gaster(text, delay=1000) {
+    await sleep(delay);
+    return await say(text.toUpperCase(), ['gaster'], sounds.text_tick, 100);
+}
+
+async function alphys(text, delay=750) {
+    await sleep(delay);
+    return await say(text, ['alphys'], sounds.alphys);
+}
+
+async function undyne(text, delay=750) {
+    await sleep(delay);
+    return await say(text, ['undyne'], sounds.undyne);
+}
+
+async function asriel(text, delay=750) {
+    await sleep(delay);
+    return await say(text, ['asriel'], sounds.asriel, 60);
+}
+
+async function flowey(text, delay=750) {
+    await sleep(delay);
+    return await say(text, ['flowey'], sounds.flowey);
+}
+
+async function floweyCackle(text, delay=750) {
+    await sleep(delay);
+    return await say(text, ['flowey'], sounds.floweyCackle, 75);
+}
+
+async function asgore(text, delay=750) {
+    await sleep(delay);
+    return await say(text, ['asgore'], sounds.asgore, 60);
+}
+
+async function asgorePitch(text, delay=750) {
+    await sleep(delay);
+    return await say(text, ['asgore'], sounds.asgorePitch, 60);
+}
+
 async function space(delay=750) {
     await sleep(delay);
     var line = document.createElement('p');
     line.classList.add('message');
     document.getElementById('messages').appendChild(line);
     return line;
-}
-
-async function paps(texts, delay=750) {
-    for (let text of texts) {
-        await pap(text, delay);
-    }
 }
 
 function ifIncludes(...needles) {
@@ -190,8 +261,7 @@ function anyOf(...specs) {
 }
 
 async function handleAnswerWith(handlers, fallback = null) {
-    var text, elem;
-    [text, elem] = await getAnswer();
+    let [text, elem] = await getAnswer();
     for (var handler of handlers) {
         if (handler[0](text.toLowerCase())) {
             await handler[1](text, elem);
