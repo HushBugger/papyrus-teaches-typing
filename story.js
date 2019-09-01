@@ -569,7 +569,7 @@ async function asgoreSegment() {
         await asgore("In the later years we had special lamps for plants that needed sunlight.");
         await asgore("But back then, my garden was the only place a lot of surface flowers grew.");
         await asgore("Half the children were more interested in the flowers than in the barrier!");
-        await asgore("Not noticing my crown, one of them asked me:");
+        await asgore("Not noticing my crown, one of them asked me, awestruck:");
         await asgorePitch('"Are you the gardener?"');
         await asgore("Hohoho!");
         await asgore("...");
