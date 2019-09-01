@@ -684,7 +684,7 @@ async function showCredits() {
     await space(1000);
     credits("UNDERTALE by Toby Fox", 1000, "https://undertale.com");
     await pap("What the heck! Who's doing that?", 750);
-    await credits("Determination Mono font by Haley Wakamatsu", 500, "https://www.behance.net/gallery/31268855/Determination-Better-Undertale-Font");
+    await credits("Determination Mono font by Haley Wakamatsu", 1000, "https://www.behance.net/gallery/31268855/Determination-Better-Undertale-Font");
     await credits("UT Sans & UT Papyrus fonts by Carter Sande", 1000, "https://gitlab.com/cartr/undertale-fonts");
     await credits("Popping sound effect by wubitog", 1000, "https://opengameart.org/content/3-pop-sounds");
     await credits("Game by HushBugger", 1000, "https://hushbugger.github.io");
