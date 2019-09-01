@@ -86,26 +86,14 @@ async function papyrusSegment() {
 
 async function canYouType() {
     await info("(Do you know how to type?)");
-    var done = false;
-    while (!done) {
-        await handleAnswerWith(
-            [
-                [ifStartsWith('ye'), async function (text) {
-                    await pap("Splendid!");
-                    await pap("I assume you're here for a refresher, then!");
-                    localStorage.setItem('completedIntro', 'true');
-                    done = true;
-                }],
-                [ifStartsWith('no'), async function (text) {
-                    await pap("Oh dear!");
-                    await pap("Well, you came to the right place!");
-                    localStorage.setItem('completedIntro', 'true');
-                    done = true;
-                }],
-                // ...shenanigans
-            ],
-        );
+    if (await getAffirmation()) {
+        await pap("Splendid!");
+        await pap("I assume you're here for a refresher, then!");
+    } else {
+        await pap("Oh dear!");
+        await pap("Well, you came to the right place!");
     }
+    localStorage.setItem('completedIntro', 'true');
     await startCourse();
 }
 
@@ -271,11 +259,10 @@ async function gasterSurvey() {
 async function alphysSegment() {
     await alphys("H-hello?");
     await alphys("Are you there?");
-    let [answer, line] = await getAnswer();
-    if (answer.toLowerCase().startsWith('n')) {
-        await alphys("...okay?");
-    } else {
+    if (affirmative((await getAnswer())[0])) {
         await alphys("Great!");
+    } else {
+        await alphys("...okay?");
     }
     await alphys("This is Alphys, by the way.");
     await alphys("Papyrus asked me to repair this thing.");
@@ -287,7 +274,7 @@ async function alphysSegment() {
     await alphys("Type this:");
     await info("the quick brown fox jumps over the lazy dog");
     while (true) {
-        [answer, line] = await getAnswer();
+        let [answer, line] = await getAnswer();
         answer = answer.toLowerCase().trim();
         if (answer === "the quick brown fox jumps over the lazy dog") {
             await alphys("Good!");
@@ -326,19 +313,11 @@ async function alphysSegment() {
     line.style.color = localStorage.getItem('favColor') || 'pink';
     await sleep(500);
     await alphys("Did it work?");
-    while (true) {
-        let [answer, line] = await getAnswer();
-        answer = answer.toLowerCase().trim();
-        if (answer.startsWith('y')) {
-            await alphys("All right!");
-            break;
-        } else if (answer.startsWith('n')) {
-            await alphys("Oh...");
-            await alphys("That's okay. I g-guess it's not very important.");
-            break;
-        } else {
-            await alphys("J-just a 'yes' or a 'no', please.");
-        }
+    if (await getAffirmation()) {
+        await alphys("All right!");
+    } else {
+        await alphys("Oh...");
+        await alphys("That's okay. I g-guess it's not very important.");
     }
     await alphys("Um, the sound test is a bit annoying.");
     await alphys("So let's skip that one.");
@@ -527,9 +506,8 @@ async function asgoreSegment() {
     await asgore("I will call Papyrus.");
     await asgore("In the meantime...");
     await asgore("Would you like a cup of tea?");
-    let answer = (await getAnswer())[0];
     let tea = false;
-    if (answer.toLowerCase().includes('ye')) {
+    if (await getAffirmation()) {
         tea = true;
         await asgore("Oh.");
         await asgore("I am sorry, but this device won't let me pass you anything.");
@@ -543,11 +521,7 @@ async function asgoreSegment() {
         await asgore("Very good.");
     } else {
         await asgore("Oh.")
-        if (answer.toLowerCase().trim().startsWith('n')) {
-            // if it's neither "yes" or "no", keep it ambiguous instead of
-            // asking for clarification
-            await asgore("That is alright.");
-        }
+        await asgore("That is alright.");
         await asgore("I suppose I cannot give you any tea anyway.");
     }
     await asgore("I must say that you picked a good day to get tossed through the air.");
@@ -558,8 +532,7 @@ async function asgoreSegment() {
     await asgore("I kept my garden there. Everyone was free to visit.")
     await asgore("Oh... I am rambling.");
     await asgore("Would you like me to keep talking?");
-    answer = (await getAnswer())[0];
-    if (answer.toLowerCase().includes('ye')) {
+    if (await getAffirmation()) {
         await asgore("Alright.");
         await asgore("Where was I?");
         await asgore("Ah. The garden.");
@@ -842,3 +815,37 @@ var shenanigans = [
     }],
     // character names
 ];
+
+function affirmative(text) {
+    const agree = ['yes', 'yeah', 'yup', 'yep', 'sure', 'ye', 'yea', 'uh huh', 'affirmative', 'ay', 'aye'];
+    const maybe = ['maybe', 'perhaps', 'suppose', 'don\'t know', 'dont know'];
+    const disagree = ['no', 'nah', 'nay', 'nope', 'negative'];
+    text = text.trim().toLowerCase();
+    for (let thing of [...agree, ...maybe]) {
+        if (text.includes(thing)) {
+            return true;
+        }
+    }
+    for (let thing of disagree) {
+        if (text.includes(thing)) {
+            return false;
+        }
+    }
+    if (text.startsWith('n')) {
+        return false;
+    }
+    if (text.startsWith('y')) {
+        return true;
+    }
+    return null;
+}
+
+async function getAffirmation() {
+    let [text, line] = await getAnswer();
+    let value = affirmative(text);
+    if (value == null) {
+        await info("(That was unclear. Yes or no?)");
+        return await getAffirmation();
+    }
+    return value;
+}

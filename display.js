@@ -84,9 +84,11 @@ function scrollDown() {
     messages.scrollTop = messages.scrollHeight;
 }
 
+let gameSpeed = 1;
+
 function sleep(delay) {
     return new Promise(function sleepResolver(resolve) {
-        setTimeout(resolve, delay)
+        setTimeout(resolve, delay / gameSpeed);
     });
 }
 
